@@ -1,0 +1,112 @@
+---
+output: github_document
+---
+
+# lm625: Fast Linear Regression via Matrix Computations
+
+The **lm625** package provides a lightweight and efficient implementation of linear regression using the closed-form OLS solution:
+
+$$
+\hat{\beta} = (X^\top X)^{-1} X^\top y.
+$$
+
+The main function, `fast_lm()`, replicates the interface of R's base `lm()` and supports both:
+
+-   **formula interface**, e.g. `fast_lm(y ~ x1 + x2, data = dat)`
+-   **x–y interface**, e.g. `fast_lm(X, y)`
+
+The function is designed primarily for learning purposes and demonstration of core matrix algebra behind linear regression.
+
+------------------------------------------------------------------------
+
+# Installation
+
+Since this is a course project package, install from local source:
+
+``` r
+devtools::install()
+```
+
+# Example
+
+Below is a minimal example illustrating basic usage.
+
+``` r
+library(lm625)
+
+set.seed(1)
+n  <- 100
+x1 <- rnorm(n)
+x2 <- rnorm(n)
+y  <- 1 + 2 * x1 - 3 * x2 + rnorm(n)
+dat <- data.frame(y, x1, x2)
+
+# fit using fast_lm
+fit_fast <- fast_lm(y ~ x1 + x2, data = dat)
+
+# fit using base R lm()
+fit_lm <- lm(y ~ x1 + x2, data = dat)
+
+# Compare coefficients
+fit_fast$coefficients
+coef(fit_lm)
+
+all.equal(fit_fast$coefficients, coef(fit_lm))
+```
+
+The coefficients from fast_lm() and lm() agree up to numerical precision, illustrating that the matrix-based implementation is correct.
+
+# Why fast_lm?
+
+The goal of this package is to provide:
+
+A transparent implementation of OLS using matrix operations.
+
+A drop-in replacement for lm() for linear models without additional features.
+
+A pedagogical tool for understanding how linear regression is computed internally.
+
+It also supports the basic components of a model object:
+
+coefficients
+
+fitted values
+
+residuals
+
+design matrix
+
+call
+
+summary method
+
+# Comparison with lm()
+
+To demonstrate correctness, we compare estimated coefficients:
+
+``` r
+all.equal(fast_lm(y ~ x1 + x2, data = dat)$coefficients,
+          coef(lm(y ~ x1 + x2, data = dat)))
+```
+
+For moderate-size datasets, fast_lm() runs efficiently by leveraging crossprod() and direct matrix operations.
+
+A more complete comparison, including timing benchmarks, is provided in the package vignette:
+
+``` r
+vignette("fastlm")
+```
+
+# Package Contents
+
+The package includes:
+
+fast_lm(): main regression function
+
+summary.fastlm(): summary method
+
+print.summary.fastlm(): custom print output
+
+unit tests ensuring correctness (testthat)
+
+vignette demonstrating usage and comparisons

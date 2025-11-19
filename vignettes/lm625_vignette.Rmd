@@ -1,0 +1,187 @@
+---
+title: "Fast Linear Regression in lm625"
+author: "Junyi Zhang"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Fast Linear Regression in lm625}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Introduction
+
+The **lm625** package provides a fast and lightweight implementation of ordinary least squares (OLS) regression using matrix computations:
+
+$$
+\hat{\beta} = (X^\top X)^{-1} X^\top y.
+$$
+
+The goal of this vignette is to demonstrate:
+
+1.  **How to use `fast_lm()`** with both formula and x–y interfaces\
+2.  **Correctness** by comparing with base R's `lm()`\
+3.  **Efficiency** through benchmarking\
+4.  **Applications** on simulated datasets
+
+------------------------------------------------------------------------
+
+# Installing the Package
+
+Since this is a course project package, it can be installed locally:
+
+``` r
+devtools::install()
+library(lm625)
+```
+
+------------------------------------------------------------------------
+
+# Basic Usage
+
+We begin with a simple simulated dataset:
+
+``` r
+set.seed(1)
+n <- 100
+x1 <- rnorm(n)
+x2 <- rnorm(n)
+y  <- 1 + 2 * x1 - 3 * x2 + rnorm(n)
+dat <- data.frame(y, x1, x2)
+```
+
+### Fit using `fast_lm`
+
+``` r
+fit_fast <- fast_lm(y ~ x1 + x2, data = dat)
+fit_fast$coefficients
+```
+
+### Fit using base R `lm()`
+
+``` r
+fit_lm <- lm(y ~ x1 + x2, data = dat)
+coef(fit_lm)
+```
+
+### Compare results
+
+``` r
+all.equal(fit_fast$coefficients, coef(fit_lm))
+```
+
+You should see:
+
+```         
+[1] TRUE
+```
+
+indicating correctness of the implementation.
+
+------------------------------------------------------------------------
+
+# Using the x–y Interface
+
+`fast_lm()` also supports matrix input:
+
+``` r
+X <- model.matrix(~ x1 + x2, data = dat)
+fit_fast_xy <- fast_lm(X, y)
+
+fit_fast_xy$coefficients
+```
+
+------------------------------------------------------------------------
+
+# Comparison with `lm()`: Accuracy
+
+We now test accuracy across many random datasets.
+
+``` r
+set.seed(2025)
+results <- replicate(50, {
+  x1 <- rnorm(200)
+  x2 <- rnorm(200)
+  y  <- 0.5 + 1.5 * x1 - 2.2 * x2 + rnorm(200)
+  dat <- data.frame(y, x1, x2)
+  f1 <- fast_lm(y ~ x1 + x2, data = dat)$coefficients
+  f2 <- coef(lm(y ~ x1 + x2, data = dat))
+  max(abs(f1 - f2))
+})
+
+summary(results)
+```
+
+Expected output: all errors close to **0 (1e-10 range)**.
+
+------------------------------------------------------------------------
+
+# Efficiency Benchmark
+
+We compare speed with base `lm()` using `microbenchmark`.
+
+``` r
+library(microbenchmark)
+
+set.seed(1)
+n <- 2000
+p <- 20
+
+X <- matrix(rnorm(n * p), n, p)
+beta <- rnorm(p)
+y <- X %*% beta + rnorm(n)
+
+mb <- microbenchmark(
+  fast_lm = fast_lm(X, y),
+  lm      = lm(y ~ X),
+  times = 20
+)
+
+mb
+```
+
+### Benchmark Plot
+
+``` r
+boxplot(mb, log = TRUE,
+        main = "fast_lm vs lm (log scale)",
+        ylab = "Time (ms, log scale)")
+```
+
+This demonstrates that **fast_lm is significantly faster** than `lm()` for moderately large problems.
+
+------------------------------------------------------------------------
+
+# Additional Demonstration: More Predictors
+
+``` r
+set.seed(123)
+n <- 300
+p <- 10
+
+X <- replicate(p, rnorm(n))
+colnames(X) <- paste0("x", 1:p)
+beta <- runif(p)
+y <- as.vector(X %*% beta + rnorm(n, sd = 0.5))
+
+dat <- data.frame(y, X)
+
+fit_fast <- fast_lm(y ~ ., data = dat)
+fit_lm   <- lm(y ~ ., data = dat)
+
+all.equal(fit_fast$coefficients, coef(fit_lm))
+```
+
+Again, the coefficient vectors match extremely closely.
+
+------------------------------------------------------------------------
+
+# Summary
+
+This vignette demonstrated:
+
+-   ✔️ How to use `fast_lm()` in different interfaces\
+-   ✔️ Correctness through comparisons with `lm()`\
+-   ✔️ Efficiency through benchmarking\
+-   ✔️ Application to more complex datasets
+
+Together, these confirm that **lm625** is a correct, efficient, and easy-to-use implementation of linear regression for educational purposes.

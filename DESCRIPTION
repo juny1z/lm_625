@@ -1,0 +1,18 @@
+Package: lm625
+Title: Fast Linear Regression for Biostat 625 HW4
+Version: 0.0.1
+Authors@R: 
+    person("Junyi", "Zhang", role = c("aut", "cre"), email = "zjuny@umich.edu")
+Description: Simple linear regression implemented from scratch for Biostat 625 homework 4.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Depends: R (>= 3.5.0)
+Imports: stats
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+VignetteBuilder: knitr
