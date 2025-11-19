@@ -9,7 +9,7 @@
 Simple linear regression implemented from scratch for Biostat 625 homework 4.
 }
 \author{
-\strong{Maintainer}: 你的名 你的姓 \email{你的邮箱}
+\strong{Maintainer}: Junyi Zhang \email{zjuny@umich.edu}
 
 }
 \keyword{internal}
